@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>公众号排版器</title>
+
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-5FTJSWC1Z5"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-5FTJSWC1Z5");
+    </script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="alternate icon" href="favicon.svg" />
+    <link rel="mask-icon" href="favicon.svg" color="#0066FF" />
+
+    <!-- Markdown 渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.0.0/dist/markdown-it.min.js"></script>
+
+    <!-- 代码高亮库 -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/atom-one-dark.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/es/highlight.min.js"></script>
+
+    <!-- Turndown - HTML 转 Markdown 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js"></script>
+
+    <!-- Vue.js -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.15/dist/vue.global.prod.js"></script>
+
+    <!-- html2canvas - 用于生成小红书图片 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <style>
+      :root {
+        --color-primary: #000;
+        --color-secondary: #666;
+        --color-tertiary: #999;
+        --color-accent: #0066ff;
+        --color-bg: #fafafa;
+        --color-surface: #fff;
+        --color-border: #e0e0e0;
+        --color-light-border: #f0f0f0;
+        --space-unit: 8px;
+        --space-xs: calc(var(--space-unit) * 1);
+        --space-sm: calc(var(--space-unit) * 2);
+        --space-md: calc(var(--space-unit) * 3);
+        --space-lg: calc(var(--space-unit) * 4);
+        --space-xl: calc(var(--space-unit) * 6);
+        --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "Helvetica Neue", Arial, sans-serif;
+        --font-mono: "SF Mono", Monaco, "Cascadia Code", "Consolas", monospace;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--color-primary);
+        background-color: var(--color-bg);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #app {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto 1fr;
+        height: 100vh;
+        max-width: 1600px;
+        margin: 0 auto;
+        background: var(--color-surface);
+      }
+
+      /* 顶部栏 */
+      .header {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-sm) var(--space-lg);
+        border-bottom: 1px solid var(--color-border);
+        background: var(--color-surface);
+      }
+
+      .logo {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--color-primary);
+        letter-spacing: -0.02em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .creator-info {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--color-tertiary);
+        margin-left: 12px;
+      }
+
+      .creator-info a {
+        color: var(--color-accent);
+        text-decoration: none;
+        transition: opacity 120ms;
+      }
+
+      .creator-info a:hover {
+        opacity: 0.7;
+      }
+
+      .github-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        color: var(--color-secondary);
+        transition: all 120ms;
+        text-decoration: none;
+      }
+
+      .github-link:hover {
+        background: var(--color-bg);
+        color: var(--color-primary);
+        transform: scale(1.05);
+      }
+
+      .github-link svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+      }
+
+      .header-links {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+      }
+
+      .header-link {
+        font-size: 13px;
+        color: var(--color-secondary);
+        text-decoration: none;
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        transition: all 120ms;
+      }
+
+      .header-link:hover {
+        color: var(--color-primary);
+        background: var(--color-bg);
+        border-color: var(--color-border);
+      }
+
+      .header-link.primary {
+        color: #fff;
+        background: var(--color-accent);
+        border-color: var(--color-accent);
+        font-weight: 600;
+      }
+
+      .header-link.primary:hover {
+        background: #0052cc;
+        border-color: #0052cc;
+        color: #fff;
+      }
+
+      /* 样式选择区 - 横向滚动 */
+      .styles-section {
+        grid-column: 1 / -1;
+        padding: var(--space-sm) 0;
+        border-bottom: 1px solid var(--color-border);
+        background: var(--color-surface);
+        overflow: hidden;
+      }
+
+      .styles-container {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: 0 var(--space-lg);
+      }
+
+      .styles-label {
+        font-size: 12px;
+        color: var(--color-tertiary);
+        font-weight: 500;
+        flex-shrink: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .styles-scroll-wrapper {
+        flex: 1;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        padding: 2px 0;
+      }
+
+      .styles-scroll-wrapper::-webkit-scrollbar {
+        height: 6px;
+      }
+
+      .styles-scroll-wrapper::-webkit-scrollbar-thumb {
+        background: var(--color-border);
+        border-radius: 3px;
+      }
+
+      .styles-list {
+        display: flex;
+        gap: 8px;
+        padding: 0 2px;
+      }
+
+      .style-card {
+        padding: 6px 12px;
+        border: 1px solid var(--color-light-border);
+        border-radius: 6px;
+        background: var(--color-surface);
+        cursor: pointer;
+        transition: all 120ms;
+        font-size: 12px;
+        color: var(--color-primary);
+        white-space: nowrap;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        position: relative;
+      }
+
+      .style-card:hover {
+        border-color: var(--color-accent);
+        background: var(--color-bg);
+      }
+
+      .style-card.active {
+        border-color: var(--color-accent);
+        background: var(--color-accent);
+        color: var(--color-surface);
+        font-weight: 500;
+      }
+
+      .style-card.recommended::before {
+        content: "✨";
+        font-size: 10px;
+        margin-right: 2px;
+      }
+
+      .style-card.starred::after {
+        content: "⭐";
+        font-size: 10px;
+        margin-left: 2px;
+      }
+
+      /* 主内容区 */
+      .main-content {
+        display: contents;
+      }
+
+      /* 编辑器面板 */
+      .editor-panel {
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--color-border);
+        overflow: hidden;
+      }
+
+      .markdown-input-container {
+        flex: 1;
+        overflow: hidden;
+        padding: var(--space-md);
+        background: var(--color-surface);
+      }
+
+      .markdown-input {
+        width: 100%;
+        height: 100%;
+        padding: var(--space-lg);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        font-family: var(--font-mono);
+        font-size: 14px;
+        line-height: 1.6;
+        resize: none;
+        background: var(--color-surface);
+        color: var(--color-primary);
+        transition: all 120ms;
+      }
+
+      .markdown-input:focus {
+        outline: 2px solid var(--color-accent);
+        outline-offset: -2px;
+      }
+
+      .markdown-input.drag-over {
+        background: var(--color-bg);
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.1);
+      }
+
+      /* 编辑器底部工具栏 */
+      .editor-footer {
+        padding: var(--space-sm) var(--space-lg);
+        border-top: 1px solid var(--color-border);
+        background: var(--color-bg);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .upload-section {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+      }
+
+      .upload-label {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        cursor: pointer;
+        padding: var(--space-sm) var(--space-md);
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        background: var(--color-surface);
+        color: var(--color-secondary);
+        font-size: 13px;
+        transition: all 120ms;
+      }
+
+      .upload-label:hover {
+        background: var(--color-surface);
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+      }
+
+      .upload-hints {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .upload-hint {
+        font-size: 12px;
+        color: var(--color-tertiary);
+      }
+
+      .feishu-hint {
+        font-size: 11px;
+        color: var(--color-accent);
+        line-height: 1.4;
+        opacity: 0.8;
+      }
+
+      .char-count {
+        font-size: 12px;
+        color: var(--color-tertiary);
+        font-family: var(--font-mono);
+      }
+
+      /* 预览面板 */
+      .preview-panel {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .preview-header {
+        padding: var(--space-sm) var(--space-lg);
+        border-bottom: 1px solid var(--color-border);
+        background: var(--color-bg);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .preview-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--color-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .mode-switcher {
+        display: flex;
+        gap: 4px;
+        background: var(--color-bg);
+        border-radius: 6px;
+        padding: 2px;
+      }
+
+      .mode-toggle-btn {
+        padding: 6px 12px;
+        background: transparent;
+        border: none;
+        border-radius: 4px;
+        color: var(--color-secondary);
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 120ms;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        text-transform: none;
+        font-weight: normal;
+      }
+
+      .mode-toggle-btn:hover {
+        color: var(--color-primary);
+      }
+
+      .mode-toggle-btn.active {
+        background: var(--color-surface);
+        color: var(--color-primary);
+        font-weight: 500;
+      }
+
+      .mode-toggle-btn svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .preview-actions {
+        display: flex;
+        gap: var(--space-sm);
+        align-items: center;
+      }
+
+      .star-btn {
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        color: var(--color-secondary);
+        cursor: pointer;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 120ms;
+      }
+
+      .star-btn:hover {
+        background: var(--color-bg);
+        color: var(--color-accent);
+      }
+
+      .star-btn.active {
+        background: var(--color-accent);
+        color: var(--color-surface);
+        border-color: var(--color-accent);
+      }
+
+      .star-btn svg {
+        width: 14px;
+        height: 14px;
+        stroke-width: 2;
+      }
+
+      .copy-btn {
+        padding: 6px 16px;
+        background: var(--color-primary);
+        color: var(--color-surface);
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 120ms;
+        letter-spacing: 0.02em;
+      }
+
+      .copy-btn:hover {
+        opacity: 0.8;
+      }
+
+      .copy-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .copy-btn.success {
+        background: #00c853;
+      }
+
+      .preview-content {
+        flex: 1;
+        overflow-y: auto;
+        background: var(--color-surface);
+        position: relative;
+      }
+
+      .preview-container {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 20px 32px 48px 32px;
+        line-height: 1.8;
+        position: relative;
+      }
+
+      .preview-container.layout-mode img {
+        cursor: pointer;
+        transition: all 120ms;
+      }
+
+      .preview-container.layout-mode img:hover {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
+      }
+
+      /* 图片控制面板 */
+      .image-control-panel {
+        background: white;
+        border: 2px solid var(--color-accent);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        padding: 16px;
+        animation: fadeIn 200ms ease-out;
+        min-width: 300px;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .control-panel-inner {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .control-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .control-group label {
+        font-size: 12px;
+        color: var(--color-secondary);
+        font-weight: 500;
+      }
+
+      .width-slider {
+        width: 120px;
+        height: 4px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: var(--color-border);
+        border-radius: 2px;
+        outline: none;
+      }
+
+      .width-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        background: var(--color-accent);
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      .width-slider::-moz-range-thumb {
+        width: 12px;
+        height: 12px;
+        background: var(--color-accent);
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+      }
+
+      .width-value {
+        font-size: 11px;
+        color: var(--color-tertiary);
+        font-family: var(--font-mono);
+        min-width: 45px;
+      }
+
+      .align-buttons {
+        display: flex;
+        gap: 4px;
+      }
+
+      .align-buttons button {
+        width: 24px;
+        height: 24px;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 120ms;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .align-buttons button:hover {
+        background: var(--color-bg);
+        border-color: var(--color-accent);
+      }
+
+      .align-buttons button.active {
+        background: var(--color-accent);
+        color: var(--color-surface);
+        border-color: var(--color-accent);
+      }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--color-tertiary);
+      }
+
+      .empty-state-icon {
+        width: 64px;
+        height: 64px;
+        margin-bottom: var(--space-lg);
+        opacity: 0.3;
+      }
+
+      .empty-state h3 {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--color-secondary);
+        margin-bottom: var(--space-xs);
+      }
+
+      .empty-state p {
+        font-size: 13px;
+        color: var(--color-tertiary);
+      }
+
+      /* 小红书预览样式 */
+      .xiaohongshu-preview {
+        padding: var(--space-lg);
+        overflow-y: auto;
+      }
+
+      .xiaohongshu-controls {
+        display: flex;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-lg);
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .xiaohongshu-btn {
+        padding: 8px 16px;
+        background: var(--color-primary);
+        color: var(--color-surface);
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 120ms;
+      }
+
+      .xiaohongshu-btn:hover {
+        opacity: 0.8;
+      }
+
+      .xiaohongshu-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .xiaohongshu-btn.secondary {
+        background: var(--color-surface);
+        color: var(--color-primary);
+        border: 1px solid var(--color-border);
+      }
+
+      .xiaohongshu-images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: var(--space-md);
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .xiaohongshu-image-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 120ms;
+        cursor: pointer;
+      }
+
+      .xiaohongshu-image-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .xiaohongshu-image-card img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .xiaohongshu-image-label {
+        padding: var(--space-sm);
+        text-align: center;
+        font-size: 12px;
+        color: var(--color-secondary);
+        background: var(--color-bg);
+      }
+
+      .xiaohongshu-loading {
+        text-align: center;
+        padding: var(--space-xl);
+        color: var(--color-secondary);
+      }
+
+      .xiaohongshu-empty {
+        text-align: center;
+        padding: var(--space-xl);
+        color: var(--color-tertiary);
+      }
+
+      /* Toast 提示 */
+      .toast {
+        position: fixed;
+        bottom: var(--space-lg);
+        right: var(--space-lg);
+        padding: var(--space-md) var(--space-lg);
+        background: var(--color-primary);
+        color: var(--color-surface);
+        border-radius: 6px;
+        font-size: 13px;
+        z-index: 1000;
+        animation: slideUp 200ms ease-out;
+      }
+
+      @keyframes slideUp {
+        from {
+          transform: translateY(100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .toast.success {
+        background: #00c853;
+      }
+
+      .toast.error {
+        background: #d32f2f;
+      }
+
+      /* 右下角浮动广告 */
+      .floating-ad {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 990;
+        font-family: var(--font-sans);
+      }
+
+      .floating-ad__collapsed {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12),
+          0 1px 2px rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        animation: floatingAdSlideIn 0.5s ease-out;
+      }
+
+      @keyframes floatingAdSlideIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .floating-ad__collapsed:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15),
+          0 2px 4px rgba(0, 0, 0, 0.08);
+      }
+
+      .floating-ad__collapsed-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .floating-ad__collapsed-icon {
+        font-size: 24px;
+      }
+
+      .floating-ad__collapsed-text {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .floating-ad__collapsed-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+
+      .floating-ad__collapsed-tag {
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 100px;
+      }
+
+      .floating-ad__close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: rgba(0, 0, 0, 0.05);
+        border: none;
+        border-radius: 50%;
+        font-size: 16px;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-left: 4px;
+      }
+
+      .floating-ad__close:hover {
+        background: rgba(0, 0, 0, 0.1);
+        color: #333;
+      }
+
+      .floating-ad__panel {
+        width: 320px;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 20px;
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15),
+          0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        animation: floatingAdExpandIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @keyframes floatingAdExpandIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95) translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      .floating-ad__panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      }
+
+      .floating-ad__panel-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1a1a1a;
+      }
+
+      .floating-ad__collapse {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: rgba(0, 0, 0, 0.05);
+        border: none;
+        border-radius: 8px;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .floating-ad__collapse:hover {
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      .floating-ad__list {
+        padding: 8px;
+      }
+
+      .floating-ad__item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .floating-ad__item:hover {
+        background: rgba(99, 102, 241, 0.06);
+      }
+
+      .floating-ad__icon {
+        font-size: 28px;
+        flex-shrink: 0;
+      }
+
+      .floating-ad__info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .floating-ad__header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .floating-ad__title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+
+      .floating-ad__tag {
+        padding: 2px 8px;
+        font-size: 10px;
+        font-weight: 600;
+        border-radius: 100px;
+        flex-shrink: 0;
+      }
+
+      .floating-ad__subtitle {
+        display: block;
+        font-size: 12px;
+        color: #666;
+        line-height: 1.4;
+      }
+
+      .floating-ad__coupon {
+        display: inline-block;
+        margin-top: 4px;
+        padding: 2px 8px;
+        background: rgba(249, 115, 22, 0.1);
+        color: #f97316;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 4px;
+      }
+
+      .floating-ad__arrow {
+        color: #999;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+      }
+
+      .floating-ad__item:hover .floating-ad__arrow {
+        transform: translateX(2px);
+        color: #666;
+      }
+
+      .floating-ad__close-expanded {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background: none;
+        border: none;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        font-size: 13px;
+        color: #888;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .floating-ad__close-expanded:hover {
+        background: rgba(0, 0, 0, 0.03);
+        color: #555;
+      }
+
+      .floating-ad__tag--orange {
+        background: rgba(249, 115, 22, 0.12);
+        color: #ea580c;
+      }
+
+      .floating-ad__tag--blue {
+        background: rgba(59, 130, 246, 0.12);
+        color: #2563eb;
+      }
+
+      .floating-ad__tag--purple {
+        background: rgba(139, 92, 246, 0.12);
+        color: #7c3aed;
+      }
+
+      .floating-ad__tag--green {
+        background: rgba(16, 185, 129, 0.12);
+        color: #059669;
+      }
+
+      .floating-ad__indicators {
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 4px;
+      }
+
+      .floating-ad__indicator {
+        width: 6px;
+        height: 6px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .floating-ad__indicator.active {
+        background: #6366f1;
+        width: 16px;
+        border-radius: 3px;
+      }
+
+      /* 滚动条 */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--color-border);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-tertiary);
+      }
+
+      /* 移动端响应式布局 */
+      @media (max-width: 768px) {
+        #app {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto auto auto 1fr;
+          height: 100vh;
+        }
+
+        .header {
+          flex-wrap: wrap;
+          gap: var(--space-xs);
+          padding: var(--space-xs) var(--space-sm);
+        }
+
+        .logo {
+          font-size: 14px;
+        }
+
+        .header-actions {
+          gap: 6px;
+        }
+
+        .header-links {
+          gap: 6px;
+        }
+
+        .header-link {
+          font-size: 11px;
+          padding: 3px 6px;
+        }
+
+        .github-link {
+          width: 28px;
+          height: 28px;
+        }
+
+        .github-link svg {
+          width: 18px;
+          height: 18px;
+        }
+
+        .styles-section {
+          padding: var(--space-xs) 0;
+        }
+
+        .styles-container {
+          padding: 0 var(--space-sm);
+        }
+
+        .style-card {
+          font-size: 11px;
+          padding: 4px 8px;
+        }
+
+        .editor-panel {
+          border-right: none;
+          border-bottom: 1px solid var(--color-border);
+          max-height: 30vh;
+        }
+
+        .markdown-input-container {
+          padding: var(--space-sm);
+        }
+
+        .markdown-input {
+          font-size: 13px;
+          padding: var(--space-md);
+        }
+
+        .editor-footer {
+          flex-direction: column;
+          gap: var(--space-sm);
+          align-items: stretch;
+          padding: var(--space-sm) var(--space-md);
+        }
+
+        .upload-section {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .upload-label {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .upload-hints {
+          align-items: center;
+          text-align: center;
+        }
+
+        .feishu-hint {
+          font-size: 10px;
+        }
+
+        .preview-header {
+          padding: var(--space-xs) var(--space-sm);
+        }
+
+        .preview-panel {
+          height: auto;
+        }
+
+        .preview-container {
+          padding: var(--space-lg) var(--space-md);
+        }
+
+        .toast {
+          left: var(--space-md);
+          right: var(--space-md);
+          bottom: var(--space-md);
+        }
+
+        .floating-ad {
+          left: var(--space-md);
+          right: var(--space-md);
+          bottom: var(--space-md);
+        }
+
+        .floating-ad__collapsed {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .floating-ad__panel {
+          width: 100%;
+        }
+      }
+
+      /* 平板端优化 */
+      @media (min-width: 769px) and (max-width: 1024px) {
+        #app {
+          max-width: 100%;
+        }
+
+        .header {
+          padding: var(--space-sm) var(--space-lg);
+        }
+
+        .styles-section {
+          padding: var(--space-sm) 0;
+        }
+
+        .preview-container {
+          padding: var(--space-xl) var(--space-lg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- 顶部栏 -->
+      <header class="header">
+        <div class="logo">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 32 32"
+            width="22"
+            height="22"
+          >
+            <defs>
+              <linearGradient
+                id="logoGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
+                <stop
+                  offset="0%"
+                  style="stop-color: #667eea; stop-opacity: 1"
+                />
+                <stop
+                  offset="100%"
+                  style="stop-color: #764ba2; stop-opacity: 1"
+                />
+              </linearGradient>
+              <linearGradient
+                id="penGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
+                <stop
+                  offset="0%"
+                  style="stop-color: #f093fb; stop-opacity: 1"
+                />
+                <stop
+                  offset="100%"
+                  style="stop-color: #f5576c; stop-opacity: 1"
+                />
+              </linearGradient>
+            </defs>
+            <rect width="32" height="32" rx="8" fill="url(#logoGradient)" />
+            <!-- 钢笔图标 -->
+            <path
+              d="M22 6 L26 10 L12 24 L8 24 L8 20 L22 6 Z"
+              fill="white"
+              opacity="0.95"
+            />
+            <path
+              d="M20 8 L24 12"
+              stroke="url(#penGradient)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <!-- 文字线条装饰 -->
+            <rect
+              x="6"
+              y="26"
+              width="10"
+              height="1.5"
+              rx="0.75"
+              fill="white"
+              opacity="0.6"
+            />
+            <rect
+              x="6"
+              y="23"
+              width="6"
+              height="1.5"
+              rx="0.75"
+              fill="white"
+              opacity="0.4"
+            />
+          </svg>
+          <span>公众号排版器</span>
+        </div>
+        <div class="header-actions">
+          <a
+            href="https://github.com/alchaincyf/huasheng_editor"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="github-link"
+            title="查看源码"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="currentColor"
+            >
+              <path
+                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+              />
+            </svg>
+          </a>
+        </div>
+      </header>
+
+      <!-- 样式选择区 - 横向滚动 -->
+      <section class="styles-section">
+        <div class="styles-container">
+          <div class="styles-label">选择样式</div>
+          <div class="styles-scroll-wrapper">
+            <div class="styles-list">
+              <!-- 收藏的样式 -->
+              <template v-if="starredStyles.length > 0">
+                <div
+                  v-for="styleKey in starredStyles"
+                  :key="'star-' + styleKey"
+                  class="style-card starred"
+                  :class="{ active: currentStyle === styleKey }"
+                  @click="currentStyle = styleKey"
+                >
+                  {{ getStyleName(styleKey) }}
+                </div>
+                <div
+                  style="
+                    width: 1px;
+                    height: 20px;
+                    background: var(--color-light-border);
+                    margin: 0 4px;
+                  "
+                ></div>
+              </template>
+
+              <!-- 所有样式，添加推荐标识 -->
+              <div
+                v-for="(style, key) in STYLES"
+                :key="key"
+                class="style-card"
+                :class="{
+                active: currentStyle === key,
+                starred: isStyleStarred(key),
+                recommended: isRecommended(key)
+              }"
+                @click="currentStyle = key"
+              >
+                {{ style.name }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 主内容区 -->
+      <div class="main-content">
+        <!-- 编辑器面板 -->
+        <div class="editor-panel">
+          <div class="markdown-input-container">
+            <textarea
+              v-model="markdownInput"
+              class="markdown-input"
+              :class="{ 'drag-over': isDraggingOver }"
+              @paste="handleSmartPaste"
+              @drop="handleDrop"
+              @dragover="handleDragOver"
+              @dragenter="handleDragEnter"
+              @dragleave="handleDragLeave"
+              placeholder="# 在这里粘贴或输入 Markdown 内容
+
+## 功能特点
+
+- **实时预览**：所见即所得
+- **13 种样式**：随意切换
+- **智能粘贴**：支持从飞书、Notion、Word 直接粘贴
+- **图片支持**：直接粘贴或拖拽图片，自动上传
+- **一键复制**：直接粘贴到公众号
+
+💡 提示：可以直接粘贴截图，或拖拽图片文件到这里"
+              spellcheck="false"
+            ></textarea>
+          </div>
+
+          <!-- 编辑器底部工具栏 -->
+          <div class="editor-footer">
+            <div class="upload-section">
+              <label for="file-upload" class="upload-label">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>上传 MD 文件</span>
+                <input
+                  type="file"
+                  id="file-upload"
+                  accept=".md,.markdown"
+                  @change="handleFileUpload"
+                  style="display: none"
+                />
+              </label>
+              <div class="upload-hints">
+                <span class="upload-hint">支持 .md / .markdown 文件</span>
+                <span class="feishu-hint">
+                  💡 支持从飞书、Notion、Word 等直接粘贴，自动转换为 Markdown
+                </span>
+              </div>
+            </div>
+            <div class="char-count">{{ markdownInput.length }} 字符</div>
+          </div>
+        </div>
+
+        <!-- 预览面板 -->
+        <div class="preview-panel">
+          <div class="preview-header">
+            <div class="preview-title">
+              预览
+              <!-- 小红书功能入口已隐藏，待调试完成后再开放 -->
+              <!-- <div class="mode-switcher" style="display: none;">
+              <button
+                class="mode-toggle-btn"
+                :class="{ active: previewMode === 'wechat' }"
+                @click="previewMode = 'wechat'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                公众号
+              </button>
+              <button
+                class="mode-toggle-btn"
+                :class="{ active: previewMode === 'xiaohongshu' }"
+                @click="previewMode = 'xiaohongshu'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/>
+                  <rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                小红书
+              </button>
+            </div> -->
+            </div>
+            <div class="preview-actions">
+              <button
+                class="star-btn"
+                :class="{ active: isStyleStarred(currentStyle) }"
+                @click="toggleStarStyle(currentStyle)"
+                title="收藏此样式"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  :fill="isStyleStarred(currentStyle) ? 'currentColor' : 'none'"
+                >
+                  <path
+                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                  ></path>
+                </svg>
+              </button>
+              <button
+                class="copy-btn"
+                :class="{ success: copySuccess }"
+                :disabled="!renderedContent"
+                @click="copyToClipboard"
+              >
+                {{ copySuccess ? '✓ 已复制' : '复制到公众号' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- 公众号预览模式 -->
+          <div class="preview-content">
+            <div v-if="!renderedContent" class="empty-state">
+              <svg
+                class="empty-state-icon"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <h3>开始编辑</h3>
+              <p>左侧输入 Markdown，右侧实时预览</p>
+            </div>
+            <div
+              v-else
+              class="preview-container"
+              v-html="renderedContent"
+            ></div>
+          </div>
+
+          <!-- 小红书预览模式（已隐藏） -->
+          <!-- <div v-if="previewMode === 'xiaohongshu'" class="xiaohongshu-preview">
+          <div class="xiaohongshu-controls">
+            <button
+              class="xiaohongshu-btn"
+              :disabled="!renderedContent || xiaohongshuGenerating"
+              @click="generateXiaohongshuImages"
+            >
+              {{ xiaohongshuGenerating ? '生成中...' : '生成小红书图片' }}
+            </button>
+            <button
+              class="xiaohongshu-btn secondary"
+              :disabled="xiaohongshuImages.length === 0"
+              @click="downloadAllXiaohongshuImages"
+            >
+              批量下载 ({{ xiaohongshuImages.length }})
+            </button>
+          </div>
+
+          <div v-if="xiaohongshuGenerating" class="xiaohongshu-loading">
+            <p>正在生成小红书图片，请稍候...</p>
+          </div>
+
+          <div v-else-if="xiaohongshuImages.length === 0" class="xiaohongshu-empty">
+            <p>点击「生成小红书图片」按钮，将内容转换为适合小红书发布的多图</p>
+          </div>
+
+          <div v-else class="xiaohongshu-images-grid">
+            <div
+              v-for="(image, index) in xiaohongshuImages"
+              :key="index"
+              class="xiaohongshu-image-card"
+              @click="downloadXiaohongshuImage(image, index)"
+            >
+              <img :src="image.dataUrl" :alt="`第 ${index + 1} 张`">
+              <div class="xiaohongshu-image-label">
+                第 {{ index + 1 }} / {{ xiaohongshuImages.length }} 张
+              </div>
+            </div>
+          </div>
+        </div> -->
+        </div>
+      </div>
+
+      <!-- Toast 提示 -->
+      <div v-if="toast.show" class="toast" :class="toast.type">
+        {{ toast.message }}
+      </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="styles.js?v=2"></script>
+    <script src="app.js?v=2"></script>
+  </body>
+</html>
